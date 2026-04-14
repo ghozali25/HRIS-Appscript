@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;margin:24px}
+    .title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .muted{color:#555}
+    table{border-collapse:collapse;width:100%;margin-top:12px}
+    td,th{border:1px solid #ddd;padding:8px;text-align:left}
+    th{background:#f3f4f6}
+    .right{text-align:right}
+  </style>
+</head>
+<body>
+  <div class="title">Slip Gaji</div>
+  <div class="muted"><?= companyName ?> | Periode: <?= periodId ?></div>
+  <div style="height:10px"></div>
+  <div><b>Nama</b>: <?= employeeName ?></div>
+  <div><b>Email</b>: <?= employeeEmail ?></div>
+  <div><b>Employee ID</b>: <?= employeeId ?></div>
+
+  <table>
+    <tr><th>Komponen</th><th class="right">Jumlah</th></tr>
+    <tr><td>Gaji Pokok</td><td class="right"><?= basicSalary ?></td></tr>
+    <tr><td>Tunjangan Tetap</td><td class="right"><?= fixedAllowance ?></td></tr>
+    <tr><td>Tunjangan Transport</td><td class="right"><?= transportAllowance ?></td></tr>
+    <tr><td>Tunjangan Jabatan</td><td class="right"><?= positionAllowance ?></td></tr>
+    <tr><td>Tunjangan Laptop</td><td class="right"><?= laptopAllowance ?></td></tr>
+    <tr><td>Lembur (Hari)</td><td class="right"><?= overtimeDays ?></td></tr>
+    <tr><td>Uang Lembur</td><td class="right"><?= overtimePay ?></td></tr>
+    <tr><td><b>Gross</b></td><td class="right"><b><?= gross ?></b></td></tr>
+    <tr><td>Potongan Absen</td><td class="right"><?= deductionAmount ?></td></tr>
+    <tr><td>BPJS Kesehatan (Karyawan)</td><td class="right"><?= bpjsHealthEmployee ?></td></tr>
+    <tr><td>BPJS TK (Karyawan)</td><td class="right"><?= bpjsTkEmployee ?></td></tr>
+    <tr><td>PPh 21</td><td class="right"><?= pph21 ?></td></tr>
+    <tr><td><b>Net Pay</b></td><td class="right"><b><?= netPay ?></b></td></tr>
+  </table>
+
+  <div style="height:14px"></div>
+  <div class="muted">Generated at <?= generatedAt ?></div>
+</body>
+</html>

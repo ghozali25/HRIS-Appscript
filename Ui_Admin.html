@@ -1,0 +1,971 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Ui_Common'); ?>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div>
+          <div class="title">Admin Panel</div>
+          <div id="me" class="muted"></div>
+        </div>
+        <div class="row" style="max-width:420px">
+          <div><button class="secondary" onclick="goto('employee')">Employee View</button></div>
+          <div><button class="secondary" onclick="logout()">Logout</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Settings</div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="muted">Late tolerance (minutes)</div>
+          <input id="lateTol" />
+        </div>
+        <div>
+          <div class="muted">Early out tolerance (minutes)</div>
+          <input id="earlyTol" />
+        </div>
+        <div>
+          <div class="muted">Min GPS accuracy (m)</div>
+          <input id="minAcc" />
+        </div>
+        <div>
+          <div class="muted">Default radius (m)</div>
+          <input id="radius" />
+        </div>
+        <div>
+          <div class="muted">Enable absent deduction (Y/N)</div>
+          <input id="enAbsDed" placeholder="Y or N" />
+        </div>
+        <div>
+          <div class="muted">Deduction per absent day</div>
+          <input id="absDedAmt" />
+        </div>
+        <div>
+          <div class="muted">Require selfie (Y/N)</div>
+          <input id="reqSelfie" placeholder="Y or N" />
+        </div>
+        <div>
+          <div class="muted">Selfie Folder ID (Drive)</div>
+          <input id="selfieFolder" placeholder="optional" />
+        </div>
+        <div>
+          <div class="muted">Payroll Folder ID (Drive)</div>
+          <input id="payrollFolder" placeholder="optional" />
+        </div>
+        <div>
+          <div class="muted">Overtime rate per day</div>
+          <input id="otRate" />
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="saveSettings()">Save Settings</button>
+      <div id="msgS" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Work Schedule</div>
+        <div style="max-width:180px"><button class="secondary" onclick="renderSchedule()">Refresh</button></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Gunakan format HH:MM. Kolom enabled harus TRUE/FALSE.</div>
+      <div id="schedGrid" style="margin-top:12px"></div>
+      <div style="height:12px"></div>
+      <button onclick="saveSchedule()">Save Schedule</button>
+      <div id="msgSCH" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Locations</div>
+      <div class="grid" style="margin-top:12px">
+        <div><input id="locName" placeholder="Name" /></div>
+        <div><input id="locLat" placeholder="Lat" /></div>
+        <div><input id="locLng" placeholder="Lng" /></div>
+        <div><input id="locRad" placeholder="Radius (m)" /></div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="addLocation()">Add / Update Location</button>
+      <div id="msgL" class="muted" style="margin-top:10px"></div>
+      <div id="locList" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Users</div>
+      <div class="grid" style="margin-top:12px">
+        <div><input id="uEmail" placeholder="Email" /></div>
+        <div><input id="uUsername" placeholder="Username" /></div>
+        <div><input id="uPassword" placeholder="Password (optional)" type="password" /></div>
+        <div>
+          <select id="uRole">
+            <option value="EMPLOYEE">EMPLOYEE</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="saveUser()">Save User</button>
+      <div id="msgU" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Employees</div>
+        <div style="max-width:180px"><button class="secondary" onclick="renderEmployeeSelect()">Refresh</button></div>
+      </div>
+      <div style="height:12px"></div>
+      <div>
+        <div class="muted">Select employee</div>
+        <select id="empSel"></select>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div><input id="empName" placeholder="Full name" /></div>
+        <div><input id="empEmail" placeholder="Email" /></div>
+        <div><input id="empPTKP" placeholder="PTKP (e.g. TK/0, K/1)" /></div>
+        <div>
+          <select id="empActive">
+            <option value="Y">Active (Y)</option>
+            <option value="N">Inactive (N)</option>
+          </select>
+        </div>
+        <div>
+          <select id="empBpjsKes">
+            <option value="Y">BPJS Kes: Y</option>
+            <option value="N">BPJS Kes: N</option>
+          </select>
+        </div>
+        <div><input id="empBpjsKesNo" placeholder="BPJS Kes number" /></div>
+        <div>
+          <select id="empBpjsTk">
+            <option value="Y">BPJS TK: Y</option>
+            <option value="N">BPJS TK: N</option>
+          </select>
+        </div>
+        <div><input id="empBpjsTkNo" placeholder="BPJS TK number" /></div>
+        <div><input id="empBasic" placeholder="Basic salary" /></div>
+        <div><input id="empFixed" placeholder="Fixed allowance" /></div>
+        <div><input id="empTransport" placeholder="Transport allowance" /></div>
+        <div><input id="empPosition" placeholder="Position allowance" /></div>
+        <div><input id="empLaptop" placeholder="Laptop allowance" /></div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="saveEmployee()">Save Employee</button>
+      <div id="msgE" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Assets</div>
+        <div style="max-width:180px"><button class="secondary" onclick="loadAssets()">Refresh</button></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div><input id="aCode" placeholder="Asset Code" /></div>
+        <div><input id="aName" placeholder="Name" /></div>
+        <div><input id="aCategory" placeholder="Category" /></div>
+        <div><input id="aSerial" placeholder="Serial Number" /></div>
+        <div><input id="aLocation" placeholder="Location" /></div>
+        <div><input id="aCondition" placeholder="Condition" /></div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="saveAsset()">Add Asset</button>
+      <div id="msgAS" class="muted" style="margin-top:10px"></div>
+      <div id="assetList" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Asset Assignment</div>
+        <div style="max-width:180px"><button class="secondary" onclick="loadAssignments()">Refresh</button></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="muted">Asset</div>
+          <select id="asAsset"></select>
+        </div>
+        <div>
+          <div class="muted">Employee</div>
+          <select id="asEmp"></select>
+        </div>
+        <div>
+          <div class="muted">Handover date</div>
+          <input id="asHandover" placeholder="YYYY-MM-DD" />
+        </div>
+        <div>
+          <div class="muted">Note</div>
+          <input id="asNote" placeholder="optional" />
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="assignAsset()">Assign</button>
+      <div id="msgAA" class="muted" style="margin-top:10px"></div>
+      <div id="assignList" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Payroll</div>
+        <div style="max-width:180px"><button class="secondary" onclick="loadPayrollPeriods()">Refresh</button></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="muted">Period</div>
+          <select id="payPeriod"></select>
+        </div>
+        <div>
+          <div class="muted">Start date</div>
+          <input id="payStart" placeholder="YYYY-MM-DD" />
+        </div>
+        <div>
+          <div class="muted">End date</div>
+          <input id="payEnd" placeholder="YYYY-MM-DD" />
+        </div>
+        <div>
+          <div class="muted">Closed</div>
+          <select id="payClosed">
+            <option value="FALSE">FALSE</option>
+            <option value="TRUE">TRUE</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="row">
+        <div><button onclick="savePayrollPeriod()">Save Period</button></div>
+        <div><button class="secondary" onclick="computePayroll()">Compute Payroll</button></div>
+        <div><button class="secondary" onclick="loadPayrollRows()">Load Result</button></div>
+        <div><button class="secondary" onclick="exportPayrollCsv()">Export CSV</button></div>
+        <div><button class="secondary" onclick="generatePayslips()">Generate Payslips PDF</button></div>
+      </div>
+      <div id="msgP" class="muted" style="margin-top:10px"></div>
+      <div id="payrollList" style="margin-top:10px"></div>
+      <div id="payrollFiles" style="margin-top:10px"></div>
+      <div class="card" style="padding:12px;margin-top:12px">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <div style="font-weight:700">Overtime input (days)</div>
+          <div style="max-width:180px"><button class="secondary" onclick="loadOvertime()">Refresh</button></div>
+        </div>
+        <div id="msgOT" class="muted" style="margin-top:10px"></div>
+        <div id="otList" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Attendance Report</div>
+        <div style="max-width:180px"><button class="secondary" onclick="loadAttendance()">Refresh</button></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="muted">Start date</div>
+          <input id="attStart" placeholder="YYYY-MM-DD" />
+        </div>
+        <div>
+          <div class="muted">End date</div>
+          <input id="attEnd" placeholder="YYYY-MM-DD" />
+        </div>
+        <div>
+          <div class="muted">Limit</div>
+          <input id="attLimit" value="200" />
+        </div>
+        <div>
+          <div class="muted">Export</div>
+          <button class="secondary" onclick="exportAttendanceCsv()">Export CSV</button>
+        </div>
+      </div>
+      <div id="msgATT" class="muted" style="margin-top:10px"></div>
+      <div id="attTable" style="margin-top:10px"></div>
+      <div id="attFiles" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="title">Suspicious Attendance (Pending)</div>
+        <div style="max-width:180px"><button class="secondary" onclick="loadSuspicious()">Refresh</button></div>
+      </div>
+      <div id="msgA" class="muted" style="margin-top:10px"></div>
+      <div id="attList" style="margin-top:10px"></div>
+    </div>
+  </div>
+<script>
+  let boot = null;
+  function getSetting(key){
+    const row = (boot.settings || []).find(x => String(x.key) === key);
+    return row ? row.value : '';
+  }
+
+  function renderPayrollPeriodSelect(){
+    const sel = document.getElementById('payPeriod');
+    const rows = boot._payPeriods || [];
+    sel.innerHTML = rows.map(p => `<option value="${esc(p.period_id)}">${esc(p.period_id)}</option>`).join('');
+  }
+
+  function onPeriodChange(){
+    const id = document.getElementById('payPeriod').value;
+    const p = (boot._payPeriods || []).find(x => String(x.period_id) === String(id));
+    if(!p) return;
+    document.getElementById('payStart').value = p.start_date;
+    document.getElementById('payEnd').value = p.end_date;
+    document.getElementById('payClosed').value = String(p.closed || 'FALSE');
+  }
+
+  async function loadPayrollPeriods(){
+    const msg = document.getElementById('msgP');
+    msg.textContent = 'Loading periods...';
+    try{
+      const rows = await api('apiAdminListPayrollPeriods', sess.token);
+      boot._payPeriods = rows;
+      renderPayrollPeriodSelect();
+      const sel = document.getElementById('payPeriod');
+      sel.onchange = onPeriodChange;
+      if(rows.length){
+        onPeriodChange();
+      }
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function savePayrollPeriod(){
+    const msg = document.getElementById('msgP');
+    msg.textContent = 'Saving period...';
+    try{
+      const period_id = document.getElementById('payPeriod').value || prompt('Period id (e.g. 2026-04)');
+      if(!period_id) throw new Error('period_id required');
+      const payload = {
+        period_id,
+        start_date: document.getElementById('payStart').value,
+        end_date: document.getElementById('payEnd').value,
+        closed: document.getElementById('payClosed').value
+      };
+      await api('apiAdminUpsertPayrollPeriod', sess.token, payload);
+      msg.textContent = 'Saved';
+      await loadPayrollPeriods();
+      document.getElementById('payPeriod').value = period_id;
+      onPeriodChange();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function computePayroll(){
+    const msg = document.getElementById('msgP');
+    msg.textContent = 'Computing...';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      await api('apiComputePayrollPeriod', sess.token, periodId);
+      msg.textContent = 'Computed';
+      await loadPayrollRows();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function loadPayrollRows(){
+    const msg = document.getElementById('msgP');
+    const list = document.getElementById('payrollList');
+    const files = document.getElementById('payrollFiles');
+    list.innerHTML = '';
+    files.innerHTML = '';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      const rows = await api('apiAdminListPayrollRows', sess.token, periodId);
+      if(!rows.length){
+        list.innerHTML = '<div class="muted">No payroll rows</div>';
+        return;
+      }
+      list.innerHTML = rows.map(r => {
+        const e = findEmp(r.employee_id);
+        const eLabel = e ? (esc(e.full_name) + ' (' + esc(e.email) + ')') : esc(r.employee_id);
+        return `
+          <div class="card" style="padding:12px">
+            <div style="font-weight:700">${eLabel}</div>
+            <div class="muted">present: ${esc(r.days_present)} | late: ${esc(r.late_count)} | early: ${esc(r.early_out_count)} | deduction: ${esc(r.deduction_amount)}</div>
+            <div class="muted">bpjs tk emp: ${esc(r.bpjs_tk_employee)} | bpjs kes emp: ${esc(r.bpjs_health_employee)} | pph21: ${esc(r.pph21_amount)}</div>
+            <div class="muted">net pay: ${esc(r.net_pay)}</div>
+          </div>`;
+      }).join('');
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function exportPayrollCsv(){
+    const msg = document.getElementById('msgP');
+    const files = document.getElementById('payrollFiles');
+    files.innerHTML = '';
+    msg.textContent = 'Exporting CSV...';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      const res = await api('apiAdminExportPayrollCsv', sess.token, periodId);
+      files.innerHTML = `<div class="card" style="padding:12px"><div style="font-weight:700">CSV</div><div class="muted"><a href="${esc(res.url)}" target="_blank" style="color:#93c5fd">${esc(res.name)}</a></div></div>`;
+      msg.textContent = 'Exported';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function generatePayslips(){
+    const msg = document.getElementById('msgP');
+    const files = document.getElementById('payrollFiles');
+    files.innerHTML = '';
+    msg.textContent = 'Generating payslips...';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      const res = await api('apiAdminGeneratePayslipsPdf', sess.token, periodId);
+      if(!res.length){
+        files.innerHTML = '<div class="muted">No payslips generated</div>';
+        msg.textContent = '';
+        return;
+      }
+      files.innerHTML = `<div class="card" style="padding:12px"><div style="font-weight:700">Payslips PDF (${res.length})</div>` +
+        res.slice(0, 20).map(x => `<div class="muted"><a href="${esc(x.url)}" target="_blank" style="color:#93c5fd">${esc(x.name)}</a></div>`).join('') +
+        (res.length > 20 ? '<div class="muted">(showing first 20)</div>' : '') +
+      `</div>`;
+      msg.textContent = 'Generated';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function init(){
+    if(!sess.token) return goto('login');
+    try{
+      boot = await api('apiAdminBootstrap', sess.token);
+      document.getElementById('me').textContent = boot.me.email + ' (' + boot.me.role + ')';
+      document.getElementById('lateTol').value = getSetting('late_tolerance_minutes');
+      document.getElementById('earlyTol').value = getSetting('early_out_tolerance_minutes');
+      document.getElementById('minAcc').value = getSetting('min_gps_accuracy_m');
+      document.getElementById('radius').value = getSetting('default_radius_m');
+      document.getElementById('enAbsDed').value = getSetting('enable_absent_deduction');
+      document.getElementById('absDedAmt').value = getSetting('deduction_per_absent_day');
+      document.getElementById('reqSelfie').value = getSetting('require_selfie');
+      document.getElementById('selfieFolder').value = getSetting('selfie_folder_id');
+      document.getElementById('payrollFolder').value = getSetting('payroll_folder_id');
+      document.getElementById('otRate').value = getSetting('overtime_rate_per_day');
+      renderLocations();
+      renderSchedule();
+      await loadAssets();
+      await loadEmployees();
+      await loadAssignments();
+      await loadPayrollPeriods();
+      renderEmployeeSelect();
+      setDefaultAttendanceRange();
+    }catch(e){
+      sess.clear();
+      goto('login');
+    }
+  }
+
+  function setDefaultAttendanceRange(){
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2,'0');
+    const y = today.getFullYear();
+    const m = pad(today.getMonth()+1);
+    const d = pad(today.getDate());
+    const end = `${y}-${m}-${d}`;
+    const startD = new Date(today);
+    startD.setDate(startD.getDate()-7);
+    const ys = startD.getFullYear();
+    const ms = pad(startD.getMonth()+1);
+    const ds = pad(startD.getDate());
+    const start = `${ys}-${ms}-${ds}`;
+    const sEl = document.getElementById('attStart');
+    const eEl = document.getElementById('attEnd');
+    if(sEl && !sEl.value) sEl.value = start;
+    if(eEl && !eEl.value) eEl.value = end;
+  }
+
+  async function loadAttendance(){
+    const msg = document.getElementById('msgATT');
+    const table = document.getElementById('attTable');
+    const files = document.getElementById('attFiles');
+    msg.textContent = 'Loading...';
+    table.innerHTML = '';
+    files.innerHTML = '';
+    try{
+      const start = document.getElementById('attStart').value;
+      const end = document.getElementById('attEnd').value;
+      const limit = document.getElementById('attLimit').value;
+      const rows = await api('apiAdminListAttendance', sess.token, start, end, limit);
+      if(!rows.length){
+        msg.textContent = 'No data';
+        return;
+      }
+      msg.textContent = '';
+      table.innerHTML = rows.map(r => {
+        const susp = String(r.suspicious_flag||'N') === 'Y';
+        const si = r.selfie_in_url ? `<a href="${esc(r.selfie_in_url)}" target="_blank" style="color:#93c5fd">selfie in</a>` : '';
+        const so = r.selfie_out_url ? `<a href="${esc(r.selfie_out_url)}" target="_blank" style="color:#93c5fd">selfie out</a>` : '';
+        return `
+          <div class="card" style="padding:12px">
+            <div style="font-weight:700">${esc(r.date)} - ${esc(r.employee_name)} (${esc(r.employee_email)})</div>
+            <div class="muted">status: ${esc(r.status)} | suspicious: ${esc(r.suspicious_flag)} | review: ${esc(r.admin_review_status)}</div>
+            <div class="muted">reason: ${esc(r.suspicious_reason)}</div>
+            <div class="muted">${si} ${so}</div>
+            <div class="muted">attendance_id: ${esc(r.attendance_id)}</div>
+          </div>`;
+      }).join('');
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function exportAttendanceCsv(){
+    const msg = document.getElementById('msgATT');
+    const files = document.getElementById('attFiles');
+    files.innerHTML = '';
+    msg.textContent = 'Exporting...';
+    try{
+      const start = document.getElementById('attStart').value;
+      const end = document.getElementById('attEnd').value;
+      const res = await api('apiAdminExportAttendanceCsv', sess.token, start, end);
+      files.innerHTML = `<div class="card" style="padding:12px"><div style="font-weight:700">CSV</div><div class="muted"><a href="${esc(res.url)}" target="_blank" style="color:#93c5fd">${esc(res.name)}</a></div></div>`;
+      msg.textContent = 'Exported';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function renderSchedule(){
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const rows = boot.schedule || [];
+    const byDay = {};
+    rows.forEach(r => { byDay[String(r.day_of_week)] = r; });
+    const el = document.getElementById('schedGrid');
+    el.innerHTML = days.map(d => {
+      const r = byDay[d] || { day_of_week: d, start_time:'08:00', end_time:'17:00', enabled:'TRUE' };
+      return `
+        <div class="row" style="align-items:center;margin:6px 0">
+          <div style="max-width:70px" class="pill">${d}</div>
+          <div style="flex:1"><input id="sch_s_${d}" value="${esc(r.start_time||'')}" placeholder="08:00" /></div>
+          <div style="flex:1"><input id="sch_e_${d}" value="${esc(r.end_time||'')}" placeholder="17:00" /></div>
+          <div style="max-width:150px"><input id="sch_en_${d}" value="${esc(r.enabled||'TRUE')}" placeholder="TRUE/FALSE" /></div>
+        </div>`;
+    }).join('');
+  }
+
+  async function saveSchedule(){
+    const msg = document.getElementById('msgSCH');
+    msg.textContent = 'Saving...';
+    try{
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const rows = days.map(d => ({
+        day_of_week: d,
+        start_time: document.getElementById('sch_s_' + d).value,
+        end_time: document.getElementById('sch_e_' + d).value,
+        enabled: document.getElementById('sch_en_' + d).value
+      }));
+      await api('apiAdminUpsertSchedule', sess.token, rows);
+      boot.schedule = rows;
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function renderLocations(){
+    const el = document.getElementById('locList');
+    const locs = boot.locations || [];
+    el.innerHTML = locs.map(l => '<div class="pill" style="margin:4px 6px 0 0">'+l.name+' ('+l.lat+','+l.lng+') r='+l.radius_m+'</div>').join('');
+  }
+
+  async function saveSettings(){
+    const msg = document.getElementById('msgS');
+    msg.textContent = 'Saving...';
+    try{
+      const kv = [
+        {key:'late_tolerance_minutes', value: document.getElementById('lateTol').value},
+        {key:'early_out_tolerance_minutes', value: document.getElementById('earlyTol').value},
+        {key:'min_gps_accuracy_m', value: document.getElementById('minAcc').value},
+        {key:'default_radius_m', value: document.getElementById('radius').value},
+        {key:'enable_absent_deduction', value: document.getElementById('enAbsDed').value},
+        {key:'deduction_per_absent_day', value: document.getElementById('absDedAmt').value},
+        {key:'require_selfie', value: document.getElementById('reqSelfie').value},
+        {key:'selfie_folder_id', value: document.getElementById('selfieFolder').value},
+        {key:'payroll_folder_id', value: document.getElementById('payrollFolder').value},
+        {key:'overtime_rate_per_day', value: document.getElementById('otRate').value},
+      ];
+      await api('apiAdminUpsertSettings', sess.token, kv);
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function renderEmployeeSelect(){
+    const sel = document.getElementById('empSel');
+    const rows = boot._employees || [];
+    sel.innerHTML = rows.map(e => `<option value="${esc(e.employee_id)}">${esc(e.full_name)} (${esc(e.email)})</option>`).join('');
+    sel.onchange = onEmployeeChange;
+    if(rows.length) onEmployeeChange();
+  }
+
+  function onEmployeeChange(){
+    const id = document.getElementById('empSel').value;
+    const e = (boot._employees || []).find(x => String(x.employee_id) === String(id));
+    if(!e) return;
+    document.getElementById('empName').value = e.full_name || '';
+    document.getElementById('empEmail').value = e.email || '';
+    document.getElementById('empPTKP').value = e.ptkp_status || '';
+    document.getElementById('empActive').value = String(e.active || 'Y');
+    document.getElementById('empBpjsKes').value = String(e.bpjs_health_member || 'N');
+    document.getElementById('empBpjsKesNo').value = e.bpjs_health_number || '';
+    document.getElementById('empBpjsTk').value = String(e.bpjs_tk_member || 'N');
+    document.getElementById('empBpjsTkNo').value = e.bpjs_tk_number || '';
+    document.getElementById('empBasic').value = e.basic_salary || '';
+    document.getElementById('empFixed').value = e.fixed_allowance || '';
+    document.getElementById('empTransport').value = e.transport_allowance || '';
+    document.getElementById('empPosition').value = e.position_allowance || '';
+    document.getElementById('empLaptop').value = e.laptop_allowance || '';
+  }
+
+  async function saveEmployee(){
+    const msg = document.getElementById('msgE');
+    msg.textContent = 'Saving...';
+    try{
+      const employee_id = document.getElementById('empSel').value;
+      if(!employee_id) throw new Error('select employee');
+      const payload = {
+        employee_id,
+        full_name: document.getElementById('empName').value,
+        email: document.getElementById('empEmail').value,
+        ptkp_status: document.getElementById('empPTKP').value,
+        active: document.getElementById('empActive').value,
+        bpjs_health_member: document.getElementById('empBpjsKes').value,
+        bpjs_health_number: document.getElementById('empBpjsKesNo').value,
+        bpjs_tk_member: document.getElementById('empBpjsTk').value,
+        bpjs_tk_number: document.getElementById('empBpjsTkNo').value,
+        basic_salary: document.getElementById('empBasic').value,
+        fixed_allowance: document.getElementById('empFixed').value,
+        transport_allowance: document.getElementById('empTransport').value,
+        position_allowance: document.getElementById('empPosition').value,
+        laptop_allowance: document.getElementById('empLaptop').value,
+      };
+      const saved = await api('apiAdminUpsertEmployee', sess.token, payload);
+      const idx = (boot._employees || []).findIndex(x => String(x.employee_id) === String(employee_id));
+      if(idx >= 0) boot._employees[idx] = { ...boot._employees[idx], ...saved };
+      renderEmployeeSelect();
+      document.getElementById('empSel').value = employee_id;
+      onEmployeeChange();
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function loadOvertime(){
+    const msg = document.getElementById('msgOT');
+    const list = document.getElementById('otList');
+    list.innerHTML = '';
+    msg.textContent = 'Loading...';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      const map = await api('apiAdminGetOvertime', sess.token, periodId);
+      boot._ot = map;
+      const emps = boot._employees || [];
+      if(!emps.length){
+        msg.textContent = 'No employees';
+        return;
+      }
+      list.innerHTML = emps.map(e => {
+        const v = (map && map[String(e.employee_id)] !== undefined) ? map[String(e.employee_id)] : 0;
+        return `
+          <div class="row" style="align-items:center;margin:6px 0">
+            <div style="flex:2" class="muted">${esc(e.full_name)} (${esc(e.email)})</div>
+            <div style="flex:1"><input id="ot_${esc(e.employee_id)}" value="${esc(v)}" /></div>
+            <div style="max-width:180px"><button class="secondary" onclick="saveOvertime('${esc(e.employee_id)}')">Save</button></div>
+          </div>`;
+      }).join('');
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function saveOvertime(employeeId){
+    const msg = document.getElementById('msgOT');
+    msg.textContent = 'Saving...';
+    try{
+      const periodId = document.getElementById('payPeriod').value;
+      if(!periodId) throw new Error('select period');
+      const el = document.getElementById('ot_' + employeeId);
+      const v = el ? el.value : '0';
+      await api('apiAdminUpsertOvertime', sess.token, periodId, employeeId, v);
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function addLocation(){
+    const msg = document.getElementById('msgL');
+    msg.textContent = 'Saving...';
+    try{
+      const loc = {
+        name: document.getElementById('locName').value,
+        lat: document.getElementById('locLat').value,
+        lng: document.getElementById('locLng').value,
+        radius_m: document.getElementById('locRad').value,
+        active: 'Y'
+      };
+      const saved = await api('apiAdminUpsertLocation', sess.token, loc);
+      boot.locations.push(saved);
+      renderLocations();
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function saveUser(){
+    const msg = document.getElementById('msgU');
+    msg.textContent = 'Saving...';
+    try{
+      const u = {
+        email: document.getElementById('uEmail').value,
+        username: document.getElementById('uUsername').value,
+        password: document.getElementById('uPassword').value,
+        role: document.getElementById('uRole').value,
+        forceReset: 'N',
+        active: 'Y'
+      };
+      if(!u.password) delete u.password;
+      await api('apiAdminUpsertUser', sess.token, u);
+      msg.textContent = 'Saved';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function esc(s){
+    return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function qrImgUrl(payload){
+    const data = encodeURIComponent(String(payload||''));
+    return 'https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl=' + data;
+  }
+
+  async function loadAssets(){
+    const msg = document.getElementById('msgAS');
+    const list = document.getElementById('assetList');
+    msg.textContent = 'Loading...';
+    list.innerHTML = '';
+    try{
+      const rows = await api('apiAdminListAssets', sess.token);
+      boot._assets = rows;
+      msg.textContent = rows.length ? '' : 'No assets';
+      renderAssetSelect();
+      list.innerHTML = rows.map(a => {
+        const title = esc(a.asset_code) + ' - ' + esc(a.name);
+        const payload = esc(a.qr_payload);
+        const img = qrImgUrl(a.qr_payload);
+        return `
+          <div class="card" style="padding:12px">
+            <div class="row">
+              <div style="flex:2">
+                <div style="font-weight:700">${title}</div>
+                <div class="muted">asset_id: ${esc(a.asset_id)}</div>
+                <div class="muted">category: ${esc(a.category)} | serial: ${esc(a.serial_number)}</div>
+                <div class="muted">location: ${esc(a.location)} | condition: ${esc(a.condition)}</div>
+                <div class="muted">qr_payload: ${payload}</div>
+              </div>
+              <div style="max-width:240px">
+                <img src="${img}" style="width:220px;height:220px;border-radius:12px;border:1px solid #2b3a60" />
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function renderAssetSelect(){
+    const sel = document.getElementById('asAsset');
+    const rows = boot._assets || [];
+    sel.innerHTML = rows.map(a => `<option value="${esc(a.asset_id)}">${esc(a.asset_code)} - ${esc(a.name)}</option>`).join('');
+  }
+
+  async function loadEmployees(){
+    const msg = document.getElementById('msgAA');
+    msg.textContent = 'Loading employees...';
+    try{
+      const rows = await api('apiAdminListEmployees', sess.token);
+      boot._employees = rows;
+      const sel = document.getElementById('asEmp');
+      sel.innerHTML = rows.map(e => `<option value="${esc(e.employee_id)}">${esc(e.full_name)} (${esc(e.email)})</option>`).join('');
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function assignAsset(){
+    const msg = document.getElementById('msgAA');
+    msg.textContent = 'Saving...';
+    try{
+      const payload = {
+        asset_id: document.getElementById('asAsset').value,
+        employee_id: document.getElementById('asEmp').value,
+        handover_date: document.getElementById('asHandover').value,
+        notes: document.getElementById('asNote').value
+      };
+      if(!payload.asset_id || !payload.employee_id || !payload.handover_date) throw new Error('asset, employee, handover_date required');
+      await api('apiAdminAssignAsset', sess.token, payload);
+      msg.textContent = 'Assigned';
+      await loadAssignments();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function returnAsset(assignmentId){
+    const msg = document.getElementById('msgAA');
+    msg.textContent = 'Saving return...';
+    try{
+      const el = document.getElementById('ret_' + assignmentId);
+      const date = el ? el.value : '';
+      if(!date) throw new Error('return date required');
+      await api('apiAdminReturnAsset', sess.token, assignmentId, date);
+      msg.textContent = 'Returned';
+      await loadAssignments();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  function findAsset(id){
+    return (boot._assets || []).find(a => String(a.asset_id) === String(id));
+  }
+  function findEmp(id){
+    return (boot._employees || []).find(e => String(e.employee_id) === String(id));
+  }
+
+  async function loadAssignments(){
+    const list = document.getElementById('assignList');
+    const msg = document.getElementById('msgAA');
+    list.innerHTML = '';
+    try{
+      const rows = await api('apiAdminListAssetAssignments', sess.token, '');
+      const recent = rows.slice(-50).reverse();
+      if(!recent.length){
+        list.innerHTML = '<div class="muted">No assignments</div>';
+        return;
+      }
+      list.innerHTML = recent.map(r => {
+        const a = findAsset(r.asset_id);
+        const e = findEmp(r.employee_id);
+        const aLabel = a ? (esc(a.asset_code) + ' - ' + esc(a.name)) : esc(r.asset_id);
+        const eLabel = e ? (esc(e.full_name) + ' (' + esc(e.email) + ')') : esc(r.employee_id);
+        const active = !r.return_date;
+        return `
+          <div class="card" style="padding:12px">
+            <div style="font-weight:700">${aLabel}</div>
+            <div class="muted">Employee: ${eLabel}</div>
+            <div class="muted">Handover: ${esc(r.handover_date)} | Return: ${esc(r.return_date)}</div>
+            <div class="muted">assignment_id: ${esc(r.assignment_id)}</div>
+            ${active ? `
+              <div style="height:10px"></div>
+              <div class="row">
+                <div><input id="ret_${esc(r.assignment_id)}" placeholder="Return date YYYY-MM-DD" /></div>
+                <div style="max-width:180px"><button class="secondary" onclick="returnAsset('${esc(r.assignment_id)}')">Mark Returned</button></div>
+              </div>
+            ` : ''}
+          </div>`;
+      }).join('');
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function saveAsset(){
+    const msg = document.getElementById('msgAS');
+    msg.textContent = 'Saving...';
+    try{
+      const asset = {
+        asset_code: document.getElementById('aCode').value,
+        name: document.getElementById('aName').value,
+        category: document.getElementById('aCategory').value,
+        serial_number: document.getElementById('aSerial').value,
+        location: document.getElementById('aLocation').value,
+        condition: document.getElementById('aCondition').value,
+        active: 'Y'
+      };
+      await api('apiAdminUpsertAsset', sess.token, asset);
+      msg.textContent = 'Saved';
+      await loadAssets();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function loadSuspicious(){
+    const msg = document.getElementById('msgA');
+    const list = document.getElementById('attList');
+    msg.textContent = 'Loading...';
+    list.innerHTML = '';
+    try{
+      const rows = await api('apiAdminListSuspiciousAttendance', sess.token, 50);
+      msg.textContent = rows.length ? '' : 'No pending suspicious attendance';
+      list.innerHTML = rows.map(r => {
+        const title = esc(r.date) + ' - ' + esc(r.employee_id);
+        const reason = esc(r.suspicious_reason);
+        return `
+          <div class="card" style="padding:12px">
+            <div class="row" style="align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:700">${title}</div>
+                <div class="muted">attendance_id: ${esc(r.attendance_id)}</div>
+                <div class="muted">reason: ${reason}</div>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <div class="row">
+              <div><input id="note_${esc(r.attendance_id)}" placeholder="note" /></div>
+              <div><button onclick="reviewAtt('${esc(r.attendance_id)}','APPROVED')">Approve</button></div>
+              <div><button class="secondary" onclick="reviewAtt('${esc(r.attendance_id)}','REJECTED')">Reject</button></div>
+            </div>
+          </div>`;
+      }).join('');
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function reviewAtt(id, decision){
+    const msg = document.getElementById('msgA');
+    msg.textContent = 'Saving...';
+    try{
+      const noteEl = document.getElementById('note_' + id);
+      const note = noteEl ? noteEl.value : '';
+      await api('apiAdminReviewAttendance', sess.token, id, decision, note);
+      msg.textContent = 'Saved';
+      await loadSuspicious();
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function logout(){
+    try{ await api('apiLogout', sess.token); }catch(e){}
+    sess.clear();
+    goto('login');
+  }
+
+  init();
+</script>
+</body>
+</html>

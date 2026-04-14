@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Ui_Common'); ?>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title">HRIS Login</div>
+      <div class="muted" style="margin-top:6px">Login pakai akun Google Anda, lalu masukkan username & password.</div>
+      <div style="height:12px"></div>
+      <div class="grid">
+        <div>
+          <div class="muted">Username</div>
+          <input id="username" placeholder="username" />
+        </div>
+        <div>
+          <div class="muted">Password</div>
+          <input id="password" type="password" placeholder="password" />
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button onclick="onLogin()">Login</button>
+      <div id="msg" class="muted" style="margin-top:10px"></div>
+    </div>
+  </div>
+<script>
+  async function onLogin(){
+    const msg = document.getElementById('msg');
+    msg.textContent = 'Loading...';
+    try{
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const dfp = deviceFingerprint();
+      const res = await api('apiLogin', u, p, dfp);
+      sess.token = res.token;
+      if(String(res.role).toUpperCase() === 'ADMIN') goto('admin'); else goto('employee');
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+</script>
+</body>
+</html>

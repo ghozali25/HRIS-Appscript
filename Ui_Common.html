@@ -1,0 +1,75 @@
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#0b1220;color:#e5e7eb}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  .card{background:#111a2e;border:1px solid #1f2a44;border-radius:12px;padding:16px;margin:12px 0}
+  input,select,button{padding:10px;border-radius:10px;border:1px solid #2b3a60;background:#0b1220;color:#e5e7eb;width:100%;box-sizing:border-box}
+  button{cursor:pointer;background:#2563eb;border-color:#2563eb}
+  button.secondary{background:#0b1220;border-color:#2b3a60}
+  .row{display:flex;gap:12px}
+  .row>div{flex:1}
+  .muted{color:#9ca3af;font-size:12px}
+  .title{font-size:18px;font-weight:700}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#0b1220;border:1px solid #2b3a60;font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (max-width:720px){.row{flex-direction:column}.grid{grid-template-columns:1fr}}
+</style>
+<script>
+  const api = (name, ...args) => new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(err => {
+      reject(err && err.message ? err.message : String(err));
+    })[name](...args);
+  });
+
+  const sess = {
+    get token(){ return localStorage.getItem('hris_token') || ''; },
+    set token(v){ localStorage.setItem('hris_token', v || ''); },
+    clear(){ localStorage.removeItem('hris_token'); }
+  };
+
+  function deviceFingerprint(){
+    const s = [navigator.userAgent, navigator.language, screen.width+'x'+screen.height, Intl.DateTimeFormat().resolvedOptions().timeZone].join('|');
+    let h = 0;
+    for(let i=0;i<s.length;i++){ h = (h<<5) - h + s.charCodeAt(i); h |= 0; }
+    return String(h);
+  }
+
+  function getGeo(){
+    return new Promise((resolve, reject) => {
+      if(!navigator.geolocation) return reject('Geolocation not supported');
+      navigator.geolocation.getCurrentPosition(pos => {
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy_m: pos.coords.accuracy
+        });
+      }, err => reject(err && err.message ? err.message : 'Failed to get location'), {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    });
+  }
+
+  async function captureSelfieBase64(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Camera not supported');
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    const video = document.createElement('video');
+    video.playsInline = true;
+    video.srcObject = stream;
+    await video.play();
+    await new Promise(r => setTimeout(r, 600));
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    stream.getTracks().forEach(t => t.stop());
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    return dataUrl;
+  }
+
+  function goto(page){
+    const base = location.href.split('?')[0];
+    location.href = base + '?page=' + encodeURIComponent(page);
+  }
+</script>

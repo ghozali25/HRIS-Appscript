@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Ui_Common'); ?>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div>
+          <div class="title">Attendance</div>
+          <div id="me" class="muted"></div>
+        </div>
+        <div style="max-width:180px">
+          <button class="secondary" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Clock In / Clock Out</div>
+      <div class="muted" style="margin-top:6px">Lokasi akan diverifikasi dengan radius kantor.</div>
+      <div style="height:12px"></div>
+      <div class="row">
+        <div><button class="secondary" onclick="takeSelfie()">Take Selfie</button></div>
+        <div><span id="selfieStatus" class="pill">Selfie: not set</span></div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="row">
+        <div><button onclick="clockIn()">Clock In</button></div>
+        <div><button onclick="clockOut()">Clock Out</button></div>
+      </div>
+      <div id="msg" class="muted" style="margin-top:10px"></div>
+    </div>
+  </div>
+<script>
+  let bootstrap = null;
+  let selfieBase64 = '';
+
+  async function init(){
+    const t = sess.token;
+    if(!t) return goto('login');
+    try{
+      bootstrap = await api('apiEmployeeBootstrap', t);
+      document.getElementById('me').textContent = bootstrap.me.email + ' (' + bootstrap.me.role + ')';
+      if(String(bootstrap.settings.requireSelfie||'N') === 'Y') {
+        document.getElementById('selfieStatus').textContent = 'Selfie: required';
+      }
+    }catch(e){
+      sess.clear();
+      goto('login');
+    }
+  }
+
+  async function takeSelfie(){
+    const msg = document.getElementById('msg');
+    msg.textContent = 'Opening camera...';
+    try{
+      selfieBase64 = await captureSelfieBase64();
+      document.getElementById('selfieStatus').textContent = 'Selfie: captured';
+      msg.textContent = '';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function uploadSelfie(kind){
+    if(!selfieBase64) {
+      if(bootstrap && String(bootstrap.settings.requireSelfie||'N') === 'Y') throw new Error('Please take selfie first');
+      return '';
+    }
+    const fn = kind + '_' + (bootstrap ? bootstrap.me.email.replace(/[^a-zA-Z0-9._-]/g,'_') : 'user') + '_' + Date.now() + '.jpg';
+    const res = await api('apiUploadSelfie', sess.token, selfieBase64, 'image/jpeg', fn);
+    return res.fileId || '';
+  }
+
+  async function clockIn(){
+    const msg = document.getElementById('msg');
+    msg.textContent = 'Getting location...';
+    try{
+      const geo = await getGeo();
+      msg.textContent = 'Uploading selfie...';
+      const selfieId = await uploadSelfie('clockin');
+      msg.textContent = 'Submitting...';
+      const payload = { ...geo, device_fingerprint: deviceFingerprint(), selfie_in_file_id: selfieId };
+      const res = await api('apiClockIn', sess.token, payload);
+      msg.textContent = res.ok ? ('Clock-in OK' + (res.suspicious === 'Y' ? ' (SUSPICIOUS: ' + res.suspicious_reason + ')' : '')) : 'Failed';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function clockOut(){
+    const msg = document.getElementById('msg');
+    msg.textContent = 'Getting location...';
+    try{
+      const geo = await getGeo();
+      msg.textContent = 'Uploading selfie...';
+      const selfieId = await uploadSelfie('clockout');
+      msg.textContent = 'Submitting...';
+      const payload = { ...geo, device_fingerprint: deviceFingerprint(), selfie_out_file_id: selfieId };
+      const res = await api('apiClockOut', sess.token, payload);
+      msg.textContent = res.ok ? ('Clock-out OK' + (res.suspicious === 'Y' ? ' (SUSPICIOUS: ' + res.suspicious_reason + ')' : '')) : 'Failed';
+    }catch(e){
+      msg.textContent = String(e);
+    }
+  }
+
+  async function logout(){
+    try{ await api('apiLogout', sess.token); }catch(e){}
+    sess.clear();
+    goto('login');
+  }
+
+  init();
+</script>
+</body>
+</html>
