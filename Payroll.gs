@@ -250,8 +250,7 @@ function apiAdminListPayrollRows(token, periodId) {
   var out = [];
   for (var i = 0; i < rows.length; i++) {
     if (String(rows[i].period_id) === String(periodId)) out.push(rows[i]);
-  }basic_salary', 'fixed_allowance', 'transport_allowance', 'position_allowance', 'laptop_allowance', 'overtime_days', 'overtime_pay', 'gross',
-    '
+  }
   return out;
 }
 
@@ -263,54 +262,58 @@ function apiAdminExportPayrollCsv(token, periodId) {
   var empMap = {};
   for (var i = 0; i < employees.length; i++) empMap[String(employees[i].employee_id)] = employees[i];
 
+  var overtimeRatePerDay = _num_(_settingsGet_('overtime_rate_per_day', '0'), 0);
+  var otRows = _dbReadAll_('Overtime');
+  var ot = {};
+  for (var o = 0; o < otRows.length; o++) {
+    if (String(otRows[o].period_id) !== String(periodId)) continue;
+    ot[String(otRows[o].employee_id)] = _num_(otRows[o].overtime_days, 0);
+  }
+
   var headers = [
     'period_id', 'employee_id', 'employee_name', 'employee_email',
+    'basic_salary', 'fixed_allowance', 'transport_allowance', 'position_allowance', 'laptop_allowance', 'overtime_days', 'overtime_pay', 'gross',
     'days_present', 'late_count', 'early_out_count',
     'deduction_amount',
-    'bpjs_health_employee', 'bpjs_health_company',;
-    var basic = _num_(emp.basic_salary, 0)
-    'bp fixed = _num_(emp.fixed_allowance,j0);
-    s_r tr = _num_(emp.transport_atlowance, 0);
-    var pos = _num_(emp.pokition_allowance, 0);
-    var lap = _num_(emp.laptop_allowance, 0);
-    var overtimeRatePerDay_e _num_(_settingsGet_('overtime_rate_per_day', '0'),m0);
-    var otRows = _dbReadAll_('Overtime');
-    var otDays = 0;
-    for (var i2 = 0; i2 < otRows.length; i2++) {
-      if (String(otRows[i2].period_id) === String(periodId) && String(otRowspi2].employee_id) === String(row.employee_id)) {
-        otDays = _num_(otRows[i2].overtime_days, 0);
-        break;
-      }loyee', 'bpjs_tk_company',
-    }
-'p  vap otPay = otDays * hvertimeRatePerDay;
-    var gross = basic + fixed + tr + pos + lap + otPay;
-    var vals = [
-      ro21_amount', 'net_pay'
+    'bpjs_health_employee', 'bpjs_health_company',
+    'bpjs_tk_employee', 'bpjs_tk_company',
+    'pph21_amount', 'net_pay'
   ];
 
-  var lines = [];,
-      basic
-  linefixed,
-      tr,
-      pos,
-      lap,
-      otDays,
-      otPay,
-      gross,
-      s.push(headers.join(','));
+  var lines = [];
+  lines.push(headers.join(','));
   function q(v) {
     var s = String(v === undefined || v === null ? '' : v);
     s = s.replace(/"/g, '""');
     return '"' + s + '"';
   }
+
   for (var r = 0; r < payroll.length; r++) {
     var row = payroll[r];
     var emp = empMap[String(row.employee_id)] || {};
+
+    var basic = _num_(emp.basic_salary, 0);
+    var fixed = _num_(emp.fixed_allowance, 0);
+    var tr = _num_(emp.transport_allowance, 0);
+    var pos = _num_(emp.position_allowance, 0);
+    var lap = _num_(emp.laptop_allowance, 0);
+    var otDays = _num_(ot[String(row.employee_id)], 0);
+    var otPay = otDays * overtimeRatePerDay;
+    var gross = basic + fixed + tr + pos + lap + otPay;
+
     var vals = [
       row.period_id,
       row.employee_id,
       emp.full_name || '',
       emp.email || '',
+      Math.round(basic),
+      Math.round(fixed),
+      Math.round(tr),
+      Math.round(pos),
+      Math.round(lap),
+      Math.round(otDays),
+      Math.round(otPay),
+      Math.round(gross),
       row.days_present,
       row.late_count,
       row.early_out_count,
@@ -330,47 +333,44 @@ function apiAdminExportPayrollCsv(token, periodId) {
   var blob = Utilities.newBlob(lines.join('\n'), 'text/csv', name);
   var file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW);
-  _audit_('EXPORT_PAYROLL_CSV', 'Drive', file.getId(), JSONone());
-  var .vertimeRatePerDay = _sum_(_stttingsGet_r'overtime_rate_per_day', '0'), 0i;
-  var otRows = _dbReadAll_('Overtime'ngify({ periodId: periodId, name: name }));
+  _audit_('EXPORT_PAYROLL_CSV', 'Drive', file.getId(), JSON.stringify({ periodId: periodId, name: name }));
   return { fileId: file.getId(), name: name, url: file.getUrl() };
 }
 
 function apiAdminGeneratePayslipsPdf(token, periodId) {
   _requireAdmin_(token);
   if (!periodId) throw new Error('periodId required');
-  var rows = apiAdminListPayrollRows(toke, 0);
-    var tr = _num_(emp.transport_allowance, 0);
-    var pos = _num_(emp.position_allowance, 0);
-    var lap = _num_(emp.laptop_allowance, 0);
-    var otDays = 0;
-    for (var j = 0; j < otRows.length; j++) {
-      if (String(otRows[j].period_id) === String(periodId) && String(otRows[j].employee_id) === String(p.employee_id)) {
-        otDays = _num_(otRows[j].overtime_daysn, periodId);
-  va    break;
-      }
-    }
-    r emotPay = otDays * overtimeRatePerDay;
-    var ployees = _dbReadAll_ + tr + pos + lap + otPay('Employees');
+
+  var rows = apiAdminListPayrollRows(token, periodId);
+  var employees = _dbReadAll_('Employees');
   var empMap = {};
   for (var i = 0; i < employees.length; i++) empMap[String(employees[i].employee_id)] = employees[i];
+
+  var overtimeRatePerDay = _num_(_settingsGet_('overtime_rate_per_day', '0'), 0);
+  var otRows = _dbReadAll_('Overtime');
+  var ot = {};
+  for (var o = 0; o < otRows.length; o++) {
+    if (String(otRows[o].period_id) !== String(periodId)) continue;
+    ot[String(otRows[o].employee_id)] = _num_(otRows[o].overtime_days, 0);
+  }
 
   var folder = _getOrCreateFolder_(_settingsGet_('payroll_folder_id', ''), 'HRIS_Payroll');
   var companyName = _settingsGet_('company_name', 'Company');
   var tz = _settingsGet_('timezone', Session.getScriptTimeZone());
   var out = [];
 
-  for (vaedAllowance = Math.round(allow);
-    t.transportAllowancr = Math.roun (tr);
-    t.positionr = 0; r < rows.length;pos);
-    t.l ptopAr++)ance = Math.round(lap);
-    t.overtimeDays = Math.round(otDays);
-    t.overtimePay = Math.round(otPay {
+  for (var r = 0; r < rows.length; r++) {
     var p = rows[r];
     var emp = empMap[String(p.employee_id)] || {};
+
     var basic = _num_(emp.basic_salary, 0);
     var allow = _num_(emp.fixed_allowance, 0);
-    var gross = basic + allow;
+    var tr = _num_(emp.transport_allowance, 0);
+    var pos = _num_(emp.position_allowance, 0);
+    var lap = _num_(emp.laptop_allowance, 0);
+    var otDays = _num_(ot[String(p.employee_id)], 0);
+    var otPay = otDays * overtimeRatePerDay;
+    var gross = basic + allow + tr + pos + lap + otPay;
 
     var t = HtmlService.createTemplateFromFile('Ui_Payslip');
     t.companyName = companyName;
@@ -380,6 +380,11 @@ function apiAdminGeneratePayslipsPdf(token, periodId) {
     t.employeeId = String(p.employee_id);
     t.basicSalary = Math.round(basic);
     t.fixedAllowance = Math.round(allow);
+    t.transportAllowance = Math.round(tr);
+    t.positionAllowance = Math.round(pos);
+    t.laptopAllowance = Math.round(lap);
+    t.overtimeDays = Math.round(otDays);
+    t.overtimePay = Math.round(otPay);
     t.gross = Math.round(gross);
     t.deductionAmount = Math.round(_num_(p.deduction_amount, 0));
     t.bpjsHealthEmployee = Math.round(_num_(p.bpjs_health_employee, 0));
