@@ -1,0 +1,8 @@
+# Dependencies (clasp / npm tooling)
+node_modules/
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
